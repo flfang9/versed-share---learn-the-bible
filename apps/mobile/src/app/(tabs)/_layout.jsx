@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { View, TouchableOpacity, Text } from "react-native";
-import { Tabs, useRouter, usePathname } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Home, Book, User, Mountain, Share2 } from "lucide-react-native"; // add Share2 for Share tab
+import { Home, Book, Share2 } from "lucide-react-native";
 import { PREF_KEYS } from "@/utils/bible/constants";
 // Keep BlurView for liquid glass effect on a single bottom bar
 import { BlurView } from "expo-blur";
@@ -25,13 +25,11 @@ function GlassTabBar({ state, descriptors, navigation }) {
   const BAR_RADIUS = 22;
   const INDICATOR_HEIGHT = 32;
 
-  // SHOW 5 TABS: home, share, journey, bible, profile
+  // SHOW 3 TABS: home, share, bible
   const tabNames = [
     "home/index",
-    "share/index", // new Share tab
-    "journey/index", // moved before bible
+    "share/index",
     "bible/index",
-    "profile/index",
   ];
 
   const tabs = tabNames
@@ -189,7 +187,6 @@ function GlassTabBar({ state, descriptors, navigation }) {
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const pathname = usePathname();
   const [lastLoc, setLastLoc] = useState({ book: "John", chapter: 1 });
   const [version, setVersion] = useState("WEB");
 
@@ -256,20 +253,12 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <Home color={color} size={22} />,
           }}
         />
-        {/* NEW Share tab */}
+        {/* Share tab */}
         <Tabs.Screen
           name="share/index"
           options={{
             title: "Share",
             tabBarIcon: ({ color }) => <Share2 color={color} size={22} />,
-          }}
-        />
-        {/* NEW Journey tab (moved before Bible) */}
-        <Tabs.Screen
-          name="journey/index"
-          options={{
-            title: "Journey",
-            tabBarIcon: ({ color }) => <Mountain color={color} size={22} />,
           }}
         />
         <Tabs.Screen
@@ -281,16 +270,6 @@ export default function TabLayout() {
         />
         {/* Hidden route for full-screen book picker inside Bible tab */}
         <Tabs.Screen name="bible/books" options={{ href: null }} />
-        <Tabs.Screen
-          name="profile/index"
-          options={{
-            title: "Profile",
-            tabBarIcon: ({ color }) => <User color={color} size={22} />,
-          }}
-        />
-        <Tabs.Screen name="profile/achievements" options={{ href: null }} />
-        <Tabs.Screen name="profile/favorites" options={{ href: null }} />
-        <Tabs.Screen name="profile/insights" options={{ href: null }} />
       </Tabs>
 
       {/* Floating Chat Button (disabled) */}

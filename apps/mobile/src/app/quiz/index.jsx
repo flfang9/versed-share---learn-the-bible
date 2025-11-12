@@ -17,6 +17,7 @@ import { useReadingPrefs } from "@/utils/bible/useReadingPrefs";
 import { useChapter } from "@/utils/bible/useChapter";
 // NEW: device id for saving results
 import { useDeviceId } from "@/utils/bible/useDeviceId";
+import { getVerseNumber } from "@/utils/bible/verseUtils";
 
 function parseQuestionsFromReply(reply) {
   try {
@@ -541,7 +542,7 @@ export default function QuizScreen() {
             ) : (
               <ScrollView style={{ maxHeight: 380 }}>
                 {refVerses.map((v, i) => {
-                  const num = v?.verse || v?.number || v?.verseNumber || i + 1;
+                  const num = getVerseNumber(v, i);
                   const text = v?.text || v?.verseText || v?.content || "";
                   return (
                     <View

@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { router } from "expo-router";
+import { getVerseNumber } from "@/utils/bible/verseUtils";
 
 export function useVerseActions({
   selectedVerse,
@@ -12,14 +13,13 @@ export function useVerseActions({
   deleteHighlight,
 }) {
   const onVersePress = useCallback((v) => {
-    const num = v?.verse || v?.number || v?.verseNumber || null;
-    return num;
+    return getVerseNumber(v);
   }, []);
 
   const onAskAI = useCallback(() => {
     if (selectedVerse == null) return;
     const vObj = verses.find((vv, idx) => {
-      const num = vv?.verse || vv?.number || vv?.verseNumber || idx + 1;
+      const num = getVerseNumber(vv, idx);
       return num === selectedVerse;
     });
     const vText = vObj?.text || vObj?.verseText || vObj?.content || "";
@@ -35,9 +35,6 @@ export function useVerseActions({
     const href = `/ai-chat?${params}`;
     router.push(href);
   }, [selectedVerse, verses, version, book, chapter]);
-
-  const onAddNote = useCallback(() => {
-  }, [selectedVerse]);
 
   const onHighlight = useCallback(() => {
     if (selectedVerse == null) return;
@@ -75,7 +72,6 @@ export function useVerseActions({
   return {
     onVersePress,
     onAskAI,
-    onAddNote,
     onHighlight,
     chooseColor,
     removeHighlight,

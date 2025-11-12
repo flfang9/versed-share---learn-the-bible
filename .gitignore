@@ -4,6 +4,7 @@ node_modules/
 .npm/
 .expo/
 .expo-shared/
+caches/
 dist/
 build/
 coverage/

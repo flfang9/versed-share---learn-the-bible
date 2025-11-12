@@ -7,7 +7,10 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Animated, { FadeInUp } from "react-native-reanimated";
+import { Share2 } from "lucide-react-native";
+import { router } from "expo-router";
 import { HIGHLIGHT_COLORS } from "@/utils/bible/constants";
+import { getVerseNumber } from "@/utils/bible/verseUtils";
 
 const buildRevealKey = (version, book, chapter) =>
   `reveal_done:${version}:${book}:${chapter}`;
@@ -29,6 +32,21 @@ export function VerseList({
   // NEW: set of verse numbers that have notes
   notesSet,
 }) {
+  // Helper to share a specific verse
+  const handleShareVerse = useCallback(
+    (verseNumber, verseText) => {
+      if (!verseNumber || !verseText) return;
+      const ref = `${book} ${chapter}:${verseNumber} (${version})`;
+      try {
+        router.push(
+          `/(tabs)/share?ref=${encodeURIComponent(ref)}&text=${encodeURIComponent(verseText)}`,
+        );
+      } catch (e) {
+        console.error("[VerseList] share navigation failed", e);
+      }
+    },
+    [book, chapter, version],
+  );
   // Hooks must come before any early returns
   const [animateReveal, setAnimateReveal] = useState(true);
 
@@ -58,11 +76,6 @@ export function VerseList({
       console.error("[VerseList] reveal flag write failed", e);
     }
   }, [animateReveal, version, book, chapter]);
-
-  const getNumber = useCallback(
-    (v, idx) => v?.verse || v?.number || v?.verseNumber || idx + 1,
-    [],
-  );
 
   // Now safe to do early returns
   if (isLoading) {
@@ -107,7 +120,7 @@ export function VerseList({
   return (
     <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
       {verses.map((item, index) => {
-        const number = getNumber(item, index);
+        const number = getVerseNumber(item, index);
         const text = item?.text || item?.verseText || item?.content || "";
         const isSelected = selectedVerse === number;
         const hasChat = chatVerses.has(Number(number));
@@ -203,17 +216,49 @@ export function VerseList({
                     </View>
                   )}
                 </View>
-                <Text
-                  style={{
-                    flex: 1,
-                    color: theme.text,
-                    fontSize: size,
-                    lineHeight: Math.round(size * 1.65),
-                    fontFamily: "CrimsonText_600SemiBold",
-                  }}
-                >
-                  {text}
-                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      color: theme.text,
+                      fontSize: size,
+                      lineHeight: Math.round(size * 1.65),
+                      fontFamily: "CrimsonText_600SemiBold",
+                    }}
+                  >
+                    {text}
+                  </Text>
+                  {/* Subtle share CTA when verse is selected */}
+                  {isSelected && (
+                    <TouchableOpacity
+                      onPress={() => handleShareVerse(number, text)}
+                      activeOpacity={0.7}
+                      style={{
+                        marginTop: 6,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        alignSelf: "flex-start",
+                        paddingHorizontal: 8,
+                        paddingVertical: 4,
+                        borderRadius: 6,
+                        backgroundColor: theme.card,
+                        borderWidth: 1,
+                        borderColor: theme.border,
+                      }}
+                    >
+                      <Share2 size={12} color={theme.subtle} />
+                      <Text
+                        style={{
+                          color: theme.subtle,
+                          fontSize: 11,
+                          marginLeft: 4,
+                          fontFamily: "CrimsonText_600SemiBold",
+                        }}
+                      >
+                        Share
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             </Animated.View>
           </TouchableOpacity>

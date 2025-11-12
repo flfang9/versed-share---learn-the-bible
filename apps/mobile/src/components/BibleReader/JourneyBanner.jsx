@@ -9,8 +9,14 @@ export function JourneyBanner({
   onGoToPlanned,
   onMarkDone,
   theme,
+  // Check if store data is valid
+  progressByJourney,
+  journeyId,
 }) {
-  if (!journey || !dayNumber) return null;
+  // Don't show if journey/dayNumber missing or store data is invalid
+  if (!journey || !dayNumber || !journeyId) return null;
+  // Check if progressByJourney exists and has data for this journey
+  if (!progressByJourney || typeof progressByJourney !== "object") return null;
 
   return (
     <View

@@ -74,5 +74,6 @@ export function useJourneyIntegration({ params, book, chapter }) {
     completeDay,
     revertDay,
     lastAchievementId,
+    progressByJourney,
   };
 }

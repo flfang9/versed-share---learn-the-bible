@@ -54,6 +54,7 @@ import useBottomScrollSpacer from "@/hooks/useBottomScrollSpacer";
 import VerseNoteModal from "@/components/BibleReader/VerseNoteModal";
 // NEW: synced notes
 import { useNotes } from "@/utils/bible/useNotes";
+import { getVerseNumber } from "@/utils/bible/verseUtils";
 
 export default function BibleReaderScreen() {
   const insets = useSafeAreaInsets();
@@ -187,7 +188,6 @@ export default function BibleReaderScreen() {
   const {
     onVersePress,
     onAskAI,
-    onAddNote,
     onHighlight,
     chooseColor,
     removeHighlight,
@@ -220,6 +220,7 @@ export default function BibleReaderScreen() {
     completeDay,
     revertDay,
     lastAchievementId,
+    progressByJourney,
   } = useJourneyIntegration({ params, book, chapter });
 
   const {
@@ -338,7 +339,7 @@ export default function BibleReaderScreen() {
   const getSelectedVerseContent = () => {
     if (selectedVerse == null || !Array.isArray(verses)) return null;
     const vObj = verses.find((vv, idx) => {
-      const num = vv?.verse || vv?.number || vv?.verseNumber || idx + 1;
+      const num = getVerseNumber(vv, idx);
       return num === selectedVerse;
     });
     const text = vObj?.text || vObj?.verseText || vObj?.content || "";
@@ -506,6 +507,8 @@ export default function BibleReaderScreen() {
         onGoToPlanned={goToPlanned}
         onMarkDone={onMarkDone}
         theme={theme}
+        progressByJourney={progressByJourney}
+        journeyId={journeyId}
       />
 
       <ScrollView
@@ -515,13 +518,15 @@ export default function BibleReaderScreen() {
         onScroll={onScroll}
         scrollEventThrottle={16}
       >
-        <DayContextCard
-          journey={journey}
-          dayNumber={dayNumber}
-          dayMeta={dayMeta}
-          dayCountLabel={dayCountLabel}
-          theme={theme}
-        />
+        {journey && dayNumber && progressByJourney && (
+          <DayContextCard
+            journey={journey}
+            dayNumber={dayNumber}
+            dayMeta={dayMeta}
+            dayCountLabel={dayCountLabel}
+            theme={theme}
+          />
+        )}
 
         <MainIdeaCard
           mode={mode}
@@ -592,12 +597,14 @@ export default function BibleReaderScreen() {
           onSaveInsight={onSaveInsight}
         />
 
-        <ReflectionCard
-          journey={journey}
-          dayNumber={dayNumber}
-          dayMeta={dayMeta}
-          theme={theme}
-        />
+        {journey && dayNumber && progressByJourney && (
+          <ReflectionCard
+            journey={journey}
+            dayNumber={dayNumber}
+            dayMeta={dayMeta}
+            theme={theme}
+          />
+        )}
       </ScrollView>
 
       <VerseActionBar

@@ -19,7 +19,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 // import * as Linking from "expo-linking";
 import KeyboardAvoidingAnimatedView from "@/components/KeyboardAvoidingAnimatedView";
 import { findPresetByKey } from "@/utils/assets/shareAssets";
-import { X, Share2, Type, AlignCenter } from "lucide-react-native";
+import { X, Share2, Type, AlignCenter, Copy } from "lucide-react-native";
 // NEW: import shared tab bar metrics so this screen sits above the custom nav bar
 import { TAB_BAR_HEIGHT, TAB_BAR_MARGIN } from "@/hooks/useBottomScrollSpacer";
 
@@ -345,9 +345,17 @@ export default function ShareComposerScreen() {
     }
   };
 
+  // Instrumentation stub for share completion events
+  const trackShareCompletion = (method, hasMedia) => {
+    // TODO: Implement analytics tracking
+    console.log("[Share] Share completed", { method, hasMedia, verseRef });
+  };
+
   const copyText = async () => {
     try {
-      await Clipboard.setStringAsync(`${verseRef}\n${verseText}`);
+      const textToCopy = `${verseRef}\n\n${verseText}`;
+      await Clipboard.setStringAsync(textToCopy);
+      trackShareCompletion("copy", !!selectedMedia);
     } catch (e) {
       console.error("[Share] copy failed", e);
     }
@@ -357,6 +365,7 @@ export default function ShareComposerScreen() {
   const buildCaption = () => `${verseRef}\n\n${verseText}`;
 
   // UPDATED: Share the currently selected media with option to share only the file URL (so iOS shows "Save Image/Video")
+  // Supports IG Stories export via system share sheet (user can select Instagram from share options)
   const shareSelectedMedia = async (opts = {}) => {
     const { onlyUrl = false } = opts;
     try {
@@ -369,8 +378,10 @@ export default function ShareComposerScreen() {
         if (onlyUrl) {
           await Share.share({ url: localUri });
         } else {
+          // Share with caption - user can paste directly into IG Stories
           await Share.share({ url: localUri, message: caption });
         }
+        trackShareCompletion(onlyUrl ? "save" : "story", true);
         return true;
       }
       if (remoteUri) {
@@ -379,11 +390,13 @@ export default function ShareComposerScreen() {
         } else {
           await Share.share({ url: remoteUri, message: caption });
         }
+        trackShareCompletion(onlyUrl ? "save" : "story", true);
         return true;
       }
       if (!onlyUrl) {
-        // Fallback to text if no media is selected
+        // Fallback to text if no media is selected - can be copied/pasted directly
         await Share.share({ message: caption });
+        trackShareCompletion("story", false);
         return true;
       }
       return false;
@@ -508,6 +521,22 @@ export default function ShareComposerScreen() {
 
         {/* Top bar share now opens share sheet (no deeplinks) */}
         <TopBar onBack={() => router.back()} onShare={handleStory} />
+        
+        {/* Copy button for text - allows direct paste */}
+        <TouchableOpacity
+          onPress={copyText}
+          activeOpacity={0.9}
+          style={{
+            position: "absolute",
+            top: 72,
+            left: 8,
+            padding: 10,
+            backgroundColor: "rgba(0,0,0,0.35)",
+            borderRadius: 999,
+          }}
+        >
+          <Copy size={22} color="#fff" />
+        </TouchableOpacity>
         <RightToolRail
           onEditText={() => setShowTextEditor(true)}
           onCycleAlign={onCycleAlign}

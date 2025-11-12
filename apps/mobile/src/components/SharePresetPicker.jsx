@@ -5,7 +5,12 @@ import { StatusBar } from "expo-status-bar";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { Sparkles, Star, BookOpen, PenTool } from "lucide-react-native";
 import { videoAssets, stillAssets } from "@/utils/assets/shareAssets";
+import { VerseSelectionModal } from "./ShareComposer/VerseSelectionModal";
+import { FavoritesPickerModal } from "./ShareComposer/FavoritesPickerModal";
+import { useVerseOfDay } from "@/utils/bible/useVerseOfDay";
+import { useReadingPrefs } from "@/utils/bible/useReadingPrefs";
 
 const BG = "#0B0B0D";
 const CARD = "#121316";
@@ -16,12 +21,17 @@ const MUTED = "#AEB1B8";
 export default function SharePresetPicker() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { version } = useReadingPrefs();
   // NEW: preserve verse text/ref if coming from the composer
   const params = useLocalSearchParams();
   const baseText = Array.isArray(params.text) ? params.text[0] : params.text;
   const baseRef = Array.isArray(params.ref) ? params.ref[0] : params.ref;
 
   const [tab, setTab] = useState("video"); // video | stills
+  const [showVerseModal, setShowVerseModal] = useState(false);
+  const [showFavoritesModal, setShowFavoritesModal] = useState(false);
+
+  const { data: verseOfDay } = useVerseOfDay(version);
 
   const onBack = () => {
     try {
@@ -42,6 +52,28 @@ export default function SharePresetPicker() {
     },
     [baseText, baseRef],
   );
+
+  const handleSelectVerse = useCallback(
+    ({ text, ref }) => {
+      router.push(buildHref({ text, ref }));
+    },
+    [router, buildHref],
+  );
+
+  const handleUseVerseOfDay = useCallback(() => {
+    if (verseOfDay) {
+      router.push(
+        buildHref({
+          text: verseOfDay.text,
+          ref: `${verseOfDay.reference} (${version})`,
+        }),
+      );
+    }
+  }, [verseOfDay, version, router, buildHref]);
+
+  const handleWriteFeeling = useCallback(() => {
+    router.push(buildHref({ text: "", ref: "" }));
+  }, [router, buildHref]);
 
   const pickFromCameraRoll = useCallback(async () => {
     try {
@@ -132,7 +164,130 @@ export default function SharePresetPicker() {
           fontWeight: "600",
         }}
       >
-        Select a preset:
+        Create Share
+      </Text>
+
+      {/* Quick Actions */}
+      <View
+        style={{
+          paddingHorizontal: 16,
+          marginBottom: 16,
+          gap: 10,
+        }}
+      >
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          <TouchableOpacity
+            onPress={handleUseVerseOfDay}
+            disabled={!verseOfDay}
+            style={{
+              flex: 1,
+              backgroundColor: "#1A1C21",
+              borderRadius: 12,
+              paddingVertical: 14,
+              paddingHorizontal: 12,
+              borderWidth: 1,
+              borderColor: BORDER,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              opacity: verseOfDay ? 1 : 0.5,
+            }}
+          >
+            <Sparkles size={18} color={TEXT} />
+            <Text style={{ color: TEXT, fontWeight: "600", fontSize: 14 }}>
+              Verse of Day
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setShowFavoritesModal(true)}
+            style={{
+              flex: 1,
+              backgroundColor: "#1A1C21",
+              borderRadius: 12,
+              paddingVertical: 14,
+              paddingHorizontal: 12,
+              borderWidth: 1,
+              borderColor: BORDER,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            <Star size={18} color={TEXT} />
+            <Text style={{ color: TEXT, fontWeight: "600", fontSize: 14 }}>
+              Favorites
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          <TouchableOpacity
+            onPress={() => setShowVerseModal(true)}
+            style={{
+              flex: 1,
+              backgroundColor: "#1A1C21",
+              borderRadius: 12,
+              paddingVertical: 14,
+              paddingHorizontal: 12,
+              borderWidth: 1,
+              borderColor: BORDER,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            <BookOpen size={18} color={TEXT} />
+            <Text style={{ color: TEXT, fontWeight: "600", fontSize: 14 }}>
+              Select Verse
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleWriteFeeling}
+            style={{
+              flex: 1,
+              backgroundColor: "#1A1C21",
+              borderRadius: 12,
+              paddingVertical: 14,
+              paddingHorizontal: 12,
+              borderWidth: 1,
+              borderColor: BORDER,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            <PenTool size={18} color={TEXT} />
+            <Text style={{ color: TEXT, fontWeight: "600", fontSize: 14 }}>
+              Write Feeling
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Divider */}
+      <View
+        style={{
+          height: 1,
+          backgroundColor: BORDER,
+          marginHorizontal: 16,
+          marginBottom: 16,
+        }}
+      />
+
+      {/* Title for presets */}
+      <Text
+        style={{
+          color: TEXT,
+          fontSize: 18,
+          paddingHorizontal: 16,
+          marginBottom: 12,
+          fontWeight: "600",
+        }}
+      >
+        Select Background:
       </Text>
 
       {/* Segmented */}
@@ -313,6 +468,20 @@ export default function SharePresetPicker() {
           )}
         </ScrollView>
       )}
+
+      {/* Verse Selection Modal */}
+      <VerseSelectionModal
+        visible={showVerseModal}
+        onSelectVerse={handleSelectVerse}
+        onClose={() => setShowVerseModal(false)}
+      />
+
+      {/* Favorites Picker Modal */}
+      <FavoritesPickerModal
+        visible={showFavoritesModal}
+        onSelectVerse={handleSelectVerse}
+        onClose={() => setShowFavoritesModal(false)}
+      />
     </View>
   );
 }
